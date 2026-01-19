@@ -1,0 +1,28 @@
+[Unit]
+Description=HUD Display Service - Vehicle Speed Display
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/hudler
+Environment="PATH=/home/pi/hudler/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/pi/hudler/venv/bin/python /home/pi/hudler/main.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Optional: Load environment variables from .env file
+# If using .env file, uncomment the line below and update path
+# EnvironmentFile=/home/pi/hudler/.env
+
+# Optional: Set environment variables directly
+# Environment="DISPLAY_TYPE=pico"
+# Environment="SIGNAL_PATH=http://172.28.1.64:8000/api/v1/asset/signals/"
+# Environment="SIGNAL_NAME=VDM_VehicleSpeed"
+# Environment="PICO_SERIAL_PORT=/dev/ttyACM0"
+
+[Install]
+WantedBy=multi-user.target
+
