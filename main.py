@@ -29,9 +29,7 @@ class HUDClient:
     """Client for connecting to SSE endpoint and displaying HUD data"""
     
     def __init__(self):
-        self.api_key = os.getenv('API_KEY')
-        if not self.api_key:
-            raise ValueError("API_KEY environment variable is required")
+        self.api_key = os.getenv('API_KEY')  # Optional - only used if provided
         
         self.signal_path = os.getenv(
             'SIGNAL_PATH', 
@@ -59,11 +57,14 @@ class HUDClient:
         
     def get_headers(self) -> dict:
         """Get HTTP headers for SSE request"""
-        return {
+        headers = {
             'Accept': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'x-api-key': self.api_key
+            'Cache-Control': 'no-cache'
         }
+        # Only include x-api-key header if API_KEY is provided
+        if self.api_key:
+            headers['x-api-key'] = self.api_key
+        return headers
     
     def parse_event_data(self, event_data: str) -> Optional[float]:
         """Parse event data and extract vehicle speed in MPH"""

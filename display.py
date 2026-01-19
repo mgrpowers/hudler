@@ -356,7 +356,12 @@ class PicoScrollDisplay:
             self.ser = None
     
     def update_speed(self, speed: float):
-        """Send speed update to Pico over serial"""
+        """Send speed update to Pico over serial
+        
+        Sends speed as a number with newline, matching the format expected by
+        the Pico code (simpletest.py) which reads from stdin and displays using
+        picoscroll.show_text()
+        """
         self.current_speed = speed
         
         if not self.ser:
@@ -366,6 +371,7 @@ class PicoScrollDisplay:
         try:
             # Send speed as simple number with newline
             # Format: "65\n" for 65 MPH
+            # The Pico code will format it as "65 MPH" and display using show_text()
             msg = f"{int(speed)}\n"
             self.ser.write(msg.encode('utf-8'))
             self.ser.flush()  # Ensure data is sent immediately

@@ -63,7 +63,7 @@ cp .env.example .env
 ```
 
 Edit `.env` and set:
-- `API_KEY`: Your API authentication key
+- `API_KEY`: (Optional) API authentication key - only needed if your endpoint requires authentication
 - `SIGNAL_PATH`: Base path for SSE endpoint (default: `http://172.28.1.64:8000/api/v1/asset/signals/`)
 - `SIGNAL_NAME`: Signal name to subscribe to (default: `VDM_VehicleSpeed`)
 - `DISPLAY_TYPE`: Display type - `tft` (default) or `pico`
