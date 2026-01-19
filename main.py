@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""
+HUD Display - Main Application
+Connects to SSE endpoint and displays vehicle speed on TFT35" display
+"""
+
+import os
+import json
+import time
+import logging
+from typing import Optional
+import requests
+from sseclient import SSEClient
+from dotenv import load_dotenv
+from display import TFTDisplay, PicoScrollDisplay
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class HUDClient:
+    """Client for connecting to SSE endpoint and displaying HUD data"""
+    
+    def __init__(self):
+        self.api_key = os.getenv('API_KEY')
+        if not self.api_key:
+            raise ValueError("API_KEY environment variable is required")
+        
+        self.signal_path = os.getenv(
+            'SIGNAL_PATH', 
+            'http://172.28.1.64:8000/api/v1/asset/signals/'
+        )
+        self.signal_name = os.getenv('SIGNAL_NAME', 'VDM_VehicleSpeed')
+        
+        # Construct full SSE URL
+        self.sse_url = f"{self.signal_path.rstrip('/')}/{self.signal_name}"
+        
+        # Initialize display based on DISPLAY_TYPE environment variable
+        display_type = os.getenv('DISPLAY_TYPE', 'tft').lower()
+        if display_type == 'pico' or display_type == 'picoscroll':
+            logger.info("Initializing Pico Scroll display...")
+            pico_port = os.getenv('PICO_SERIAL_PORT')
+            pico_baudrate = int(os.getenv('PICO_BAUDRATE', '115200'))
+            self.display = PicoScrollDisplay(port=pico_port, baudrate=pico_baudrate)
+        else:
+            logger.info("Initializing TFT35 display...")
+            self.display = TFTDisplay()
+        
+        # Connection retry settings
+        self.retry_delay = 5  # seconds
+        self.max_retries = 10
+        
+    def get_headers(self) -> dict:
+        """Get HTTP headers for SSE request"""
+        return {
+            'Accept': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'x-api-key': self.api_key
+        }
+    
+    def parse_event_data(self, event_data: str) -> Optional[float]:
+        """Parse event data and extract vehicle speed in MPH"""
+        try:
+            data = json.loads(event_data)
+            # Try different possible key formats
+            speed = data.get('VDM_VehicleSpeed') or data.get('value') or data.get('speed')
+            if speed is not None:
+                return float(speed)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse JSON: {e}")
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to convert speed to float: {e}")
+        return None
+    
+    def connect_and_display(self):
+        """Main loop: connect to SSE and update display"""
+        retry_count = 0
+        
+        while retry_count < self.max_retries:
+            try:
+                logger.info(f"Connecting to SSE endpoint: {self.sse_url}")
+                
+                response = requests.get(
+                    self.sse_url,
+                    headers=self.get_headers(),
+                    stream=True,
+                    timeout=30
+                )
+                response.raise_for_status()
+                
+                # Reset retry count on successful connection
+                retry_count = 0
+                
+                # Create SSE client
+                client = SSEClient(response)
+                
+                logger.info("Connected to SSE stream, waiting for events...")
+                
+                # Process events
+                for event in client.events():
+                    if event.data:
+                        speed = self.parse_event_data(event.data)
+                        if speed is not None:
+                            logger.info(f"Vehicle Speed: {speed} MPH")
+                            self.display.update_speed(speed)
+                    
+                    # Handle keep-alive
+                    if event.event == 'keep-alive':
+                        continue
+                
+            except requests.exceptions.RequestException as e:
+                retry_count += 1
+                logger.error(f"Connection error (attempt {retry_count}/{self.max_retries}): {e}")
+                if retry_count < self.max_retries:
+                    logger.info(f"Retrying in {self.retry_delay} seconds...")
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error("Max retries reached. Exiting.")
+                    raise
+            
+            except KeyboardInterrupt:
+                logger.info("Received interrupt signal, shutting down...")
+                break
+            
+            except Exception as e:
+                logger.error(f"Unexpected error: {e}", exc_info=True)
+                retry_count += 1
+                if retry_count < self.max_retries:
+                    time.sleep(self.retry_delay)
+                else:
+                    raise
+        
+        self.display.cleanup()
+
+
+def main():
+    """Entry point"""
+    try:
+        client = HUDClient()
+        client.connect_and_display()
+    except KeyboardInterrupt:
+        logger.info("Application terminated by user")
+    except Exception as e:
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        raise
+
+
+if __name__ == '__main__':
+    main()
+

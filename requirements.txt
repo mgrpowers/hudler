@@ -1,0 +1,11 @@
+# Core dependencies
+requests>=2.31.0
+sseclient-py>=1.8.0
+Pillow>=10.0.0
+python-dotenv>=1.0.0
+pyserial>=3.5
+
+# Raspberry Pi GPIO and SPI (install on RPi only)
+# RPi.GPIO>=0.7.1
+# spidev>=3.6
+
