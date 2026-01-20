@@ -407,3 +407,129 @@ class PicoScrollDisplay:
                 pass
             self.ser = None
 
+
+class QualiaESP32Display:
+    """Interface for Qualia ESP32-S3 RGB666 TFT display via USB serial"""
+    
+    def __init__(self, port=None, baudrate=115200):
+        self.port = port
+        self.baudrate = baudrate
+        self.current_speed: Optional[float] = None
+        self.ser = None
+        self._init_serial()
+    
+    def _find_esp32_port(self):
+        """Find the serial port for ESP32-S3"""
+        if self.port:
+            return self.port
+        
+        # Check environment variable
+        env_port = os.getenv('ESP32_SERIAL_PORT')
+        if env_port:
+            logger.info(f"Using ESP32 port from environment: {env_port}")
+            return env_port
+        
+        if not SERIAL_AVAILABLE:
+            return None
+        
+        # Auto-detect ESP32
+        try:
+            ports = serial.tools.list_ports.comports()
+            esp32_identifiers = ['ESP32', 'ESP32-S3', 'CH340', 'CP210', 'Silicon Labs', 'USB Serial']
+            
+            for port in ports:
+                # Check description
+                if any(identifier in port.description for identifier in esp32_identifiers):
+                    logger.info(f"Auto-detected ESP32: {port.device}")
+                    return port.device
+                
+                # Check VID/PID (common ESP32 USB-to-Serial chip VIDs)
+                # CH340: 0x1A86, CP210x: 0x10C4, Silicon Labs: 0x10C4, ESP32-S3: 0x303A
+                if hasattr(port, 'vid'):
+                    if port.vid in [0x1A86, 0x10C4, 0x303A]:
+                        logger.info(f"Auto-detected ESP32 by VID: {port.device}")
+                        return port.device
+        except Exception as e:
+            logger.warning(f"Error detecting ESP32 port: {e}")
+        
+        return None
+    
+    def _init_serial(self):
+        """Initialize serial connection to ESP32"""
+        if not SERIAL_AVAILABLE:
+            logger.error("pyserial not available. Install with: pip install pyserial")
+            return
+        
+        port_name = self._find_esp32_port()
+        if not port_name:
+            logger.error("No ESP32 serial port found!")
+            logger.info("Please connect your ESP32-S3 and try again.")
+            logger.info("Or set ESP32_SERIAL_PORT environment variable.")
+            return
+        
+        try:
+            logger.info(f"Connecting to ESP32-S3 at {port_name} ({self.baudrate} baud)...")
+            self.ser = serial.Serial(port_name, self.baudrate, timeout=1)
+            import time
+            time.sleep(2)  # Give ESP32 time to initialize
+            logger.info("ESP32-S3 serial connection established!")
+            self.port = port_name
+        except serial.SerialException as e:
+            logger.error(f"Failed to open serial port {port_name}: {e}")
+            logger.info("Make sure ESP32-S3 is connected and not in use by another program")
+            self.ser = None
+        except Exception as e:
+            logger.error(f"Unexpected error opening serial port: {e}")
+            self.ser = None
+    
+    def update_speed(self, speed: float):
+        """Send speed update to ESP32-S3 over serial
+        
+        Sends speed as a number with newline, matching the format expected by
+        the ESP32 code which reads from serial and displays on RGB666 TFT
+        """
+        self.current_speed = speed
+        
+        if not self.ser:
+            logger.warning("Serial port not available - cannot send to ESP32-S3")
+            return
+        
+        try:
+            # Send speed as simple number with newline
+            # Format: "65\n" for 65 MPH
+            # The ESP32 code will format and display it on the RGB666 TFT
+            msg = f"{int(speed)}\n"
+            self.ser.write(msg.encode('utf-8'))
+            self.ser.flush()  # Ensure data is sent immediately
+            logger.debug(f"Sent to ESP32-S3: {speed} MPH")
+        except serial.SerialException as e:
+            logger.error(f"Serial write error: {e}")
+            # Try to reconnect
+            self._reconnect()
+        except Exception as e:
+            logger.error(f"Error sending to ESP32-S3: {e}")
+    
+    def _reconnect(self):
+        """Attempt to reconnect to ESP32-S3"""
+        logger.info("Attempting to reconnect to ESP32-S3...")
+        if self.ser:
+            try:
+                self.ser.close()
+            except:
+                pass
+            self.ser = None
+        
+        import time
+        time.sleep(1)
+        self._init_serial()
+    
+    def cleanup(self):
+        """Clean up serial connection"""
+        if self.ser:
+            try:
+                self.ser.close()
+                logger.info("ESP32-S3 serial connection closed")
+            except:
+                pass
+            self.ser = None
+

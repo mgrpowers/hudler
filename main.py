@@ -12,7 +12,7 @@ from typing import Optional
 import requests
 from sseclient import SSEClient
 from dotenv import load_dotenv
-from display import TFTDisplay, PicoScrollDisplay
+from display import TFTDisplay, PicoScrollDisplay, QualiaESP32Display
 
 # Load environment variables from .env file
 load_dotenv()
@@ -47,6 +47,11 @@ class HUDClient:
             pico_port = os.getenv('PICO_SERIAL_PORT')
             pico_baudrate = int(os.getenv('PICO_BAUDRATE', '115200'))
             self.display = PicoScrollDisplay(port=pico_port, baudrate=pico_baudrate)
+        elif display_type == 'qualia' or display_type == 'esp32' or display_type == 'esp32-s3':
+            logger.info("Initializing Qualia ESP32-S3 RGB666 TFT display...")
+            esp32_port = os.getenv('ESP32_SERIAL_PORT')
+            esp32_baudrate = int(os.getenv('ESP32_BAUDRATE', '115200'))
+            self.display = QualiaESP32Display(port=esp32_port, baudrate=esp32_baudrate)
         else:
             logger.info("Initializing TFT35 display...")
             self.display = TFTDisplay()

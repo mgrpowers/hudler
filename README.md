@@ -19,6 +19,12 @@ Real-time vehicle speed display (MPH) on a TFT35" touch shield connected to a Ra
 - USB cable to connect Pico to Raspberry Pi/computer
 - Network connection (for Raspberry Pi)
 
+**Option 3: Qualia ESP32-S3 RGB666 TFT Display**
+- Raspberry Pi (3B+ or newer recommended) OR any computer with Python
+- Qualia ESP32-S3 RGB666 40p TFT Display
+- USB cable to connect ESP32-S3 to Raspberry Pi/computer
+- Network connection (for Raspberry Pi)
+
 ## Installation
 
 ### 1. Set Up Virtual Environment (Recommended)
@@ -124,7 +130,34 @@ To use a Pimoroni Pico Scroll Pack connected to a Raspberry Pi Pico:
 4. **Pico firmware requirements:**
    - Flash Pimoroni MicroPython firmware to your Pico
    - Upload a MicroPython script to the Pico that reads from serial and displays on Scroll Pack
-   - See `pico_scroll_example.py` for example Pico code (to be created)
+   - See `simpletest.py` for example Pico code
+
+#### Qualia ESP32-S3 RGB666 TFT Display
+
+To use a Qualia ESP32-S3 RGB666 40p TFT Display:
+
+1. **Set display type:**
+   ```bash
+   export DISPLAY_TYPE=qualia
+   # or
+   export DISPLAY_TYPE=esp32
+   ```
+
+2. **Optional: Specify ESP32 serial port** (auto-detected if not set):
+   ```bash
+   export ESP32_SERIAL_PORT=/dev/ttyUSB0  # or /dev/ttyACM0, /dev/tty.usbserial-XXX on macOS
+   ```
+
+3. **Test serial connection first:**
+   ```bash
+   python test_esp32_serial.py
+   ```
+   This will send test speed values to your ESP32-S3 to verify communication.
+
+4. **ESP32-S3 firmware requirements:**
+   - Flash MicroPython or Arduino firmware to your ESP32-S3
+   - Upload code that reads from serial and displays on RGB666 TFT
+   - See `esp32_qualia_example.py` for example ESP32-S3 code
 
 ## Usage
 
@@ -134,19 +167,31 @@ To use a Pimoroni Pico Scroll Pack connected to a Raspberry Pi Pico:
 source venv/bin/activate
 ```
 
-### Testing Pico Serial Connection (Mac to Pico)
+### Testing Serial Connections
 
 Before running the full application, test serial communication:
 
+**For Pico Scroll:**
 ```bash
 python test_pico_serial.py
 ```
 
-This script will:
-- Auto-detect your Pico's serial port
+**For ESP32-S3:**
+```bash
+python test_esp32_serial.py
+```
+
+These scripts will:
+- Auto-detect the device's serial port
 - Send test speed values (0, 25, 50, 65, 75, 85 MPH)
-- Simulate rapid real-time updates
+- Simulate rapid real-time updates (50ms intervals)
 - Verify near real-time communication is working
+
+You can also specify the port manually:
+```bash
+python test_esp32_serial.py /dev/ttyUSB0
+python test_esp32_serial.py /dev/ttyUSB0 115200  # with custom baudrate
+```
 
 ### Running the Main Application
 
