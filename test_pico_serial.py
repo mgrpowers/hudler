@@ -135,3 +135,4 @@ if __name__ == '__main__':
     success = test_serial_communication(port)
     sys.exit(0 if success else 1)
 
+

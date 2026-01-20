@@ -112,3 +112,4 @@ One of these should work. Update the code with the working method.
 **Problem:** Serial port not found
 - **Solution:** Check USB connection, try different port in test script
 
+

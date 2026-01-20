@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/hudler
-Environment="PATH=/home/pi/hudler/venv/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/home/pi/hudler/venv/bin/python /home/pi/hudler/main.py
+User=raspberry
+WorkingDirectory=/home/raspberry/code/hudler
+Environment="PATH=/home/raspberry/code/hudler/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/raspberry/code/hudler/venv/bin/python /home/raspberry/code/hudler/main.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -15,7 +15,7 @@ StandardError=journal
 
 # Optional: Load environment variables from .env file
 # If using .env file, uncomment the line below and update path
-# EnvironmentFile=/home/pi/hudler/.env
+# EnvironmentFile=/home/raspberry/code/hudler/.env
 
 # Optional: Set environment variables directly
 # Environment="DISPLAY_TYPE=pico"

@@ -91,3 +91,4 @@ if __name__ == "__main__":
     print("Displaying '65 MPH' statically")
     time.sleep(3)
 
+
