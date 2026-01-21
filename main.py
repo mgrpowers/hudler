@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
 HUD Display - Main Application
-Connects to SSE endpoint and displays vehicle speed on TFT35" display
+Connects to SSE endpoint and displays vehicle speed on various displays:
+- TFT35" Touch Shield (default)
+- Pico Scroll Pack (via Raspberry Pi Pico)
+- Qualia ESP32-S3 RGB666 TFT Display
+
+Set DISPLAY_TYPE environment variable to select display:
+  - 'tft' or not set: TFT35" display
+  - 'pico' or 'picoscroll': Pico Scroll Pack
+  - 'qualia', 'esp32', or 'esp32-s3': Qualia ESP32-S3 RGB666 TFT
 """
 
 import os
@@ -33,7 +41,7 @@ class HUDClient:
         
         self.signal_path = os.getenv(
             'SIGNAL_PATH', 
-            'http://172.28.1.64:8000/api/v1/asset/signals/'
+            'http://172.28.2.64:8000/api/v1/asset/signals/'
         )
         self.signal_name = os.getenv('SIGNAL_NAME', 'VDM_VehicleSpeed')
         
@@ -42,17 +50,23 @@ class HUDClient:
         
         # Initialize display based on DISPLAY_TYPE environment variable
         display_type = os.getenv('DISPLAY_TYPE', 'tft').lower()
+        
         if display_type == 'pico' or display_type == 'picoscroll':
+            # Pico Scroll Pack via Raspberry Pi Pico
             logger.info("Initializing Pico Scroll display...")
-            pico_port = os.getenv('PICO_SERIAL_PORT')
+            pico_port = os.getenv('PICO_SERIAL_PORT')  # Auto-detected if not set
             pico_baudrate = int(os.getenv('PICO_BAUDRATE', '115200'))
             self.display = PicoScrollDisplay(port=pico_port, baudrate=pico_baudrate)
-        elif display_type == 'qualia' or display_type == 'esp32' or display_type == 'esp32-s3':
+            
+        elif display_type in ['qualia', 'esp32', 'esp32-s3']:
+            # Qualia ESP32-S3 RGB666 TFT Display
             logger.info("Initializing Qualia ESP32-S3 RGB666 TFT display...")
-            esp32_port = os.getenv('ESP32_SERIAL_PORT')
+            esp32_port = os.getenv('ESP32_SERIAL_PORT')  # Auto-detected if not set
             esp32_baudrate = int(os.getenv('ESP32_BAUDRATE', '115200'))
             self.display = QualiaESP32Display(port=esp32_port, baudrate=esp32_baudrate)
+            
         else:
+            # Default: TFT35" Touch Shield
             logger.info("Initializing TFT35 display...")
             self.display = TFTDisplay()
         

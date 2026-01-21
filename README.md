@@ -20,10 +20,17 @@ Real-time vehicle speed display (MPH) on a TFT35" touch shield connected to a Ra
 - Network connection (for Raspberry Pi)
 
 **Option 3: Qualia ESP32-S3 RGB666 TFT Display**
+
+**Option 3a: Serial Mode (via Raspberry Pi/Computer)**
 - Raspberry Pi (3B+ or newer recommended) OR any computer with Python
-- Qualia ESP32-S3 RGB666 40p TFT Display
+- Qualia ESP32-S3 RGB666 TFT Display
 - USB cable to connect ESP32-S3 to Raspberry Pi/computer
 - Network connection (for Raspberry Pi)
+
+**Option 3b: Wi-Fi Mode (Standalone - No Raspberry Pi needed!)**
+- Qualia ESP32-S3 RGB666 TFT Display
+- Wi-Fi network access
+- USB cable for programming only
 
 ## Installation
 
@@ -72,9 +79,11 @@ Edit `.env` and set:
 - `API_KEY`: (Optional) API authentication key - only needed if your endpoint requires authentication
 - `SIGNAL_PATH`: Base path for SSE endpoint (default: `http://172.28.1.64:8000/api/v1/asset/signals/`)
 - `SIGNAL_NAME`: Signal name to subscribe to (default: `VDM_VehicleSpeed`)
-- `DISPLAY_TYPE`: Display type - `tft` (default) or `pico`
+- `DISPLAY_TYPE`: Display type - `tft` (default), `pico`, `qualia`, `esp32`, or `esp32-s3`
 - `PICO_SERIAL_PORT`: Serial port for Pico (auto-detected if not set)
 - `PICO_BAUDRATE`: Serial baudrate for Pico (default: `115200`)
+- `ESP32_SERIAL_PORT`: Serial port for ESP32-S3 (auto-detected if not set)
+- `ESP32_BAUDRATE`: Serial baudrate for ESP32-S3 (default: `115200`)
 
 ### 3. Load Environment Variables
 
@@ -134,7 +143,9 @@ To use a Pimoroni Pico Scroll Pack connected to a Raspberry Pi Pico:
 
 #### Qualia ESP32-S3 RGB666 TFT Display
 
-To use a Qualia ESP32-S3 RGB666 40p TFT Display:
+**Method 1: Serial Mode (via Raspberry Pi)**
+
+To use a Qualia ESP32-S3 RGB666 TFT Display with serial communication:
 
 1. **Set display type:**
    ```bash
@@ -149,10 +160,43 @@ To use a Qualia ESP32-S3 RGB666 40p TFT Display:
    ```
 
 3. **Test serial connection first:**
-   ```bash
-   python test_esp32_serial.py
+       ```bash
+       python test_esp32_serial.py
+       ```
+       This will send test speed values to your ESP32-S3 to verify communication.
+
+**Method 2: Wi-Fi Mode (Standalone - Direct Connection)**
+
+The ESP32-S3 can connect directly to the SSE endpoint via Wi-Fi, eliminating the need for a Raspberry Pi!
+
+1. **Configure Wi-Fi:**
+   Create a `settings.toml` file on your `CIRCUITPY` drive:
+   ```toml
+   CIRCUITPY_WIFI_SSID = "your_wifi_name"
+   CIRCUITPY_WIFI_PASSWORD = "your_wifi_password"
    ```
-   This will send test speed values to your ESP32-S3 to verify communication.
+
+2. **Set environment variables (optional):**
+   You can also set these in `settings.toml` or hardcode them in the script:
+   ```toml
+   SIGNAL_PATH = "http://172.28.1.64:8000/api/v1/asset/signals/"
+   SIGNAL_NAME = "VDM_VehicleSpeed"
+   API_KEY = "your_api_key_here"  # Optional
+   ```
+
+3. **Upload Wi-Fi example:**
+   ```bash
+   # Copy esp32_qualia_wifi_example.py to CIRCUITPY/main.py
+   cp esp32_qualia_wifi_example.py /Volumes/CIRCUITPY/main.py
+   ```
+
+4. **The ESP32-S3 will:**
+   - Connect to Wi-Fi automatically
+   - Connect directly to your SSE endpoint
+   - Display speed values in real-time
+   - No Raspberry Pi or computer needed!
+
+**Note:** USB-to-Ethernet adapters are NOT supported. The ESP32-S3 uses built-in Wi-Fi for network connectivity.
 
 4. **ESP32-S3 firmware requirements:**
    - Flash MicroPython or Arduino firmware to your ESP32-S3
