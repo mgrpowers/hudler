@@ -1,5 +1,5 @@
 """
-CircuitPython example for Qualia ESP32-S3 RGB666 40p TFT Display
+CircuitPython code for Qualia ESP32-S3 RGB666 40p TFT Display
 Receives speed values over USB serial and displays on the RGB666 TFT
 
 To use:
@@ -9,9 +9,8 @@ To use:
 3. Connect ESP32-S3 to Raspberry Pi/computer via USB
 4. Run the host application which will send speed values
 
-IMPORTANT: This file must be renamed to code.py on the CIRCUITPY drive
+IMPORTANT: This file must be named code.py on the CIRCUITPY drive
 CircuitPython automatically executes code.py when the device boots.
-See code.py in this repository for the ready-to-use version.
 """
 
 # CircuitPython version
@@ -617,7 +616,5 @@ def main():
             time.sleep(0.1)
 
 
-# Note: In CircuitPython, code.py runs automatically on boot.
-# If using this as code.py, uncomment the line below:
-# main()
-
+# CircuitPython automatically runs code.py on boot, so call main() directly
+main()
